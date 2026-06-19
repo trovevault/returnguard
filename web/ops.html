@@ -3,202 +3,222 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Pearl of the Atlantic Boutique — Returns Ops</title>
+<title>Pearl of the Atlantic — Returns Operations</title>
 <style>
-  :root {
-    --bg: #0b0f17;
-    --panel: #131a26;
-    --panel-2: #1a2231;
-    --border: #243042;
-    --text: #e7edf5;
-    --muted: #8a98ac;
-    --green: #22c55e;
-    --amber: #f59e0b;
-    --red: #ef4444;
-    --accent: #6366f1;
+  :root{
+    --bg:#0a0e16; --panel:#121826; --panel2:#1a2233; --line:#26314a; --text:#e8eef7; --muted:#8a98b0;
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --accent:#6366f1; --teal:#22d3ee;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 16px;
-    padding: 20px 28px; border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; background: rgba(11,15,23,.85); backdrop-filter: blur(8px); z-index: 5;
-  }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand .logo {
-    width: 34px; height: 34px; border-radius: 9px;
-    background: linear-gradient(135deg, var(--accent), #22d3ee);
-    display: grid; place-items: center; font-size: 18px;
-  }
-  .brand h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
-  .brand p { margin: 0; font-size: 12px; color: var(--muted); }
-  .stats { display: flex; gap: 10px; align-items: center; }
-  .stat {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-    padding: 8px 14px; min-width: 78px; text-align: center;
-  }
-  .stat .n { font-size: 20px; font-weight: 700; line-height: 1; }
-  .stat .l { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-top: 4px; }
-  .stat.deny .n { color: var(--red); }
-  .stat.escalate .n { color: var(--amber); }
-  .stat.approve .n { color: var(--green); }
-  .live { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(34,197,94,.6); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.5);} 70%{box-shadow:0 0 0 8px rgba(34,197,94,0);} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0);} }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
 
-  main { padding: 24px 28px; max-width: 1100px; margin: 0 auto; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-bottom:1px solid var(--line);background:rgba(10,14,22,.9);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand .mark{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#bfeae6 38%,#0d6b73 120%)}
+  .brand b{font-size:15px}
+  .brand small{display:block;color:var(--muted);font-size:11px}
+  .who{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted)}
+  .who .live{display:flex;align-items:center;gap:6px}
+  .who .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+  .who .admin{display:flex;align-items:center;gap:8px;color:var(--text)}
+  .who .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--teal));display:grid;place-items:center;font-size:12px;font-weight:700}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 
-  .card {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-    padding: 16px; position: relative; overflow: hidden;
-    border-left-width: 4px; transition: transform .2s ease;
-  }
-  .card.v-auto_approve { border-left-color: var(--green); }
-  .card.v-escalate { border-left-color: var(--amber); }
-  .card.v-deny { border-left-color: var(--red); }
-  .card.fresh { animation: drop .6s ease; }
-  @keyframes drop { 0%{ transform: translateY(-8px); background:#1d2740;} 100%{ transform: translateY(0); } }
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 26px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px 18px}
+  .kpi .n{font-size:26px;font-weight:800;line-height:1}
+  .kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-top:7px}
+  .kpi.pending .n{color:var(--amber)} .kpi.approved .n{color:var(--green)} .kpi.denied .n{color:var(--red)} .kpi.loss .n{color:var(--teal)}
 
-  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-  .order { font-size: 13px; color: var(--muted); }
-  .order b { color: var(--text); font-size: 15px; }
-  .badge {
-    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
-    padding: 4px 9px; border-radius: 999px; white-space: nowrap;
-  }
-  .badge.v-auto_approve { background: rgba(34,197,94,.15); color: var(--green); }
-  .badge.v-escalate { background: rgba(245,158,11,.15); color: var(--amber); }
-  .badge.v-deny { background: rgba(239,68,68,.15); color: var(--red); }
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tab{padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px;cursor:pointer}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .tab .badge{background:rgba(255,255,255,.18);border-radius:8px;padding:1px 7px;margin-left:6px;font-size:11px}
 
-  .reason { font-size: 14px; margin: 12px 0 14px; color: var(--text); }
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:12px 16px;border-bottom:1px solid var(--line)}
+  td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:14px}
+  tr:last-child td{border-bottom:none}
+  tbody tr{cursor:pointer;transition:background .15s}
+  tbody tr:hover{background:var(--panel2)}
+  tr.fresh{animation:flash 1s ease}
+  @keyframes flash{0%{background:#1d2b46}100%{background:transparent}}
+  .cust .nm{font-weight:600} .cust .em{color:var(--muted);font-size:12px}
+  .vbadge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .v-auto_approve{background:rgba(34,197,94,.16);color:var(--green)} .v-escalate{background:rgba(245,158,11,.16);color:var(--amber)} .v-deny{background:rgba(239,68,68,.16);color:var(--red)}
+  .score{font-weight:700} .stat{font-size:12px;color:var(--muted)}
+  .stat .pill{display:inline-block;padding:2px 9px;border-radius:999px;border:1px solid var(--line)}
+  .pill.pending{color:var(--amber);border-color:rgba(245,158,11,.4)} .pill.resolved{color:var(--muted)}
 
-  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .score-row .lbl { font-size: 11px; color: var(--muted); width: 74px; }
-  .bar { flex: 1; height: 7px; border-radius: 4px; background: var(--panel-2); overflow: hidden; }
-  .bar > span { display: block; height: 100%; border-radius: 4px; }
-  .score-val { font-size: 13px; font-weight: 700; width: 34px; text-align: right; }
-
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-  .chip {
-    font-size: 11px; padding: 3px 8px; border-radius: 6px;
-    background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
-  }
-  .chip.resale { color: var(--red); border-color: rgba(239,68,68,.4); }
-  .chip.ok { color: var(--green); border-color: rgba(34,197,94,.35); }
-
-  .evidence { display: flex; gap: 12px; }
-  .evidence ul { margin: 0; padding-left: 16px; flex: 1; }
-  .evidence li { font-size: 12.5px; color: var(--muted); margin-bottom: 5px; line-height: 1.35; }
-  .thumb {
-    width: 70px; height: 70px; border-radius: 9px; object-fit: cover;
-    border: 1px solid var(--border); background: var(--panel-2); flex-shrink: 0;
-  }
-  .empty { color: var(--muted); text-align: center; padding: 60px 0; }
-  footer { text-align: center; color: var(--muted); font-size: 11px; padding: 24px; }
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:480px;max-width:94vw;background:var(--panel);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .25s ease;z-index:40;overflow-y:auto}
+  .drawer.on{transform:translateX(0)}
+  .dh{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+  .dh h2{margin:0;font-size:18px} .dh .x{cursor:pointer;color:var(--muted);font-size:22px;line-height:1;background:none;border:none}
+  .db{padding:18px 20px}
+  .sec{margin-bottom:18px}
+  .sec h3{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:0 0 9px}
+  .kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;gap:14px}
+  .kv span:first-child{color:var(--muted);white-space:nowrap}
+  .kv span:last-child,.kv b{text-align:right}
+  .imgs{display:flex;gap:12px}
+  .imgs figure{flex:1;margin:0} .imgs img{width:100%;height:130px;object-fit:cover;border-radius:9px;border:1px solid var(--line);background:var(--panel2)}
+  .imgs figcaption{font-size:11px;color:var(--muted);text-align:center;margin-top:5px}
+  .scorerow{display:flex;align-items:center;gap:10px;margin:8px 0 12px}
+  .bar{flex:1;height:8px;border-radius:5px;background:var(--panel2);overflow:hidden}.bar>span{display:block;height:100%}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+  .chip{font-size:11px;padding:4px 9px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);display:flex;align-items:center;gap:5px}
+  .chip .src{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-left:1px solid var(--line);padding-left:5px;margin-left:2px}
+  .chip.bad{color:#fdae9d;border-color:rgba(239,68,68,.4)} .chip.good{color:#a7f0c8;border-color:rgba(34,197,94,.35)}
+  .reasons{margin:0;padding-left:17px} .reasons li{font-size:13px;color:var(--muted);margin-bottom:5px;line-height:1.4}
+  .resolution{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;color:var(--muted)}
+  .resolution .big{font-size:15px;font-weight:700;margin-bottom:4px}
+  .actions{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:16px 20px}
+  .actions textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px;font-family:inherit;font-size:13px;margin-bottom:10px;resize:vertical;min-height:46px}
+  .actions .btns{display:flex;gap:10px}
+  .btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+  .btn.approve{background:var(--green);color:#06240f} .btn.deny{background:var(--red);color:#2a0a07}
+  .btn:disabled{opacity:.5;cursor:wait}
+  .footer{text-align:center;color:var(--muted);font-size:11px;padding:22px}
 </style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <div class="logo">🛡️</div>
-      <div>
-        <h1>Pearl of the Atlantic · Returns Ops</h1>
-        <p>Live fraud decisions — powered by ReturnGuard</p>
-      </div>
+  <div class="topbar">
+    <div class="brand"><span class="mark"></span><div><b>Pearl of the Atlantic</b><small>Returns Operations</small></div></div>
+    <div class="who">
+      <span class="live"><span class="dot"></span><span id="liveText">live</span></span>
+      <span class="admin"><span class="avatar">LP</span>Luís · Store Admin</span>
     </div>
-    <div class="stats" id="stats">
-      <div class="stat"><div class="n" id="s-total">0</div><div class="l">Cases</div></div>
-      <div class="stat approve"><div class="n" id="s-approve">0</div><div class="l">Approved</div></div>
-      <div class="stat escalate"><div class="n" id="s-escalate">0</div><div class="l">Escalated</div></div>
-      <div class="stat deny"><div class="n" id="s-deny">0</div><div class="l">Denied</div></div>
-      <div class="live"><span class="dot"></span><span id="live-text">live</span></div>
-    </div>
-  </header>
+  </div>
 
-  <main>
-    <div class="grid" id="grid"></div>
-    <div class="empty" id="empty">Waiting for the first decision…</div>
-  </main>
-  <footer>Voice: Vapi · Vision: Nebius · Web grounding: Apify · Backend: InsForge</footer>
+  <div class="wrap">
+    <div class="kpis">
+      <div class="kpi pending"><div class="n" id="k-pending">0</div><div class="l">Needs review</div></div>
+      <div class="kpi approved"><div class="n" id="k-approved">0</div><div class="l">Approved</div></div>
+      <div class="kpi denied"><div class="n" id="k-denied">0</div><div class="l">Denied</div></div>
+      <div class="kpi loss"><div class="n" id="k-loss">$0</div><div class="l">Fraud loss prevented</div></div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-f="pending">Needs review <span class="badge" id="b-pending">0</span></div>
+      <div class="tab" data-f="all">All</div>
+      <div class="tab" data-f="approved">Approved</div>
+      <div class="tab" data-f="denied">Denied</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Order</th><th>Customer</th><th>Product</th><th>AI verdict</th><th>Score</th><th>Status</th><th>Time</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="footer">Decisions by ReturnGuard — voice (Vapi) · vision (Nebius) · live web checks (Apify) · backend (InsForge)</div>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer"></aside>
 
 <script>
-  const FEED_URL = "https://zz3ntem9.us-east.insforge.app/functions/cases-feed";
-  const POLL_MS = 3000;
-  const seen = new Set();
-  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const FN="https://zz3ntem9.us-east.insforge.app/functions";
+  const $=id=>document.getElementById(id);
+  let cases=[], filter="pending", openId=null, seen=new Set();
+  const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const money=(p,c)=> (c==="USD"||!c?"$":c+" ")+Number(p||0).toLocaleString();
+  const ago=iso=>{const s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000);return s<60?Math.floor(s)+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":Math.floor(s/86400)+"d";};
+  const scoreColor=v=>v>=.6?"var(--red)":v>=.3?"var(--amber)":"var(--green)";
+  const vlabel=v=>({auto_approve:"Auto-approve",escalate:"Escalate",deny:"Deny"}[v]||v);
 
-  function timeAgo(iso) {
-    const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-    if (s < 60) return Math.floor(s) + "s ago";
-    if (s < 3600) return Math.floor(s/60) + "m ago";
-    if (s < 86400) return Math.floor(s/3600) + "h ago";
-    return Math.floor(s/86400) + "d ago";
-  }
-  function scoreColor(v) { return v >= 0.6 ? "var(--red)" : v >= 0.3 ? "var(--amber)" : "var(--green)"; }
-
-  function cardHTML(c, fresh) {
-    const v = c.verdict || "escalate";
-    const score = Number(c.fraud_score ?? 0);
-    const reasons = Array.isArray(c.reasons) ? c.reasons : [];
-    const domains = Array.isArray(c.resale_domains) ? c.resale_domains : [];
-    const chips = [];
-    if (c.resale_flag) domains.forEach(d => chips.push(`<span class="chip resale">resale: ${esc(d)}</span>`));
-    if (c.variant_match === true) chips.push(`<span class="chip ok">variant match</span>`);
-    if (c.variant_match === false) chips.push(`<span class="chip resale">variant mismatch</span>`);
-    return `
-      <div class="card v-${esc(v)} ${fresh ? "fresh" : ""}">
-        <div class="card-top">
-          <div class="order">order <b>#${esc(c.order_id)}</b><br><span>${timeAgo(c.created_at)}</span></div>
-          <div class="badge v-${esc(v)}">${esc(v.replace("_"," "))}</div>
-        </div>
-        <div class="reason">"${esc(c.reason)}"</div>
-        <div class="score-row">
-          <span class="lbl">fraud score</span>
-          <div class="bar"><span style="width:${Math.round(score*100)}%;background:${scoreColor(score)}"></span></div>
-          <span class="score-val" style="color:${scoreColor(score)}">${score.toFixed(2)}</span>
-        </div>
-        ${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}
-        <div class="evidence">
-          <ul>${reasons.map(r => `<li>${esc(r)}</li>`).join("") || "<li>No evidence recorded.</li>"}</ul>
-          ${c.photo_url ? `<img class="thumb" src="${esc(c.photo_url)}" alt="" onerror="this.style.display='none'">` : ""}
-        </div>
-      </div>`;
+  function chips(c){
+    const out=[];
+    if(c.resale_flag) out.push(`<span class="chip bad">🌐 Found on resale: ${esc((c.resale_domains||[]).join(", ")||"marketplace")}<span class="src">Apify</span></span>`);
+    if(c.variant_match===false) out.push(`<span class="chip bad">👁 Variant mismatch<span class="src">Nebius</span></span>`);
+    if(c.variant_match===true) out.push(`<span class="chip good">👁 Matches order<span class="src">Nebius</span></span>`);
+    const r=(c.reasons||[]).join(" ").toLowerCase();
+    if(r.includes("stock")) out.push(`<span class="chip bad">👁 Stock / online image<span class="src">Nebius</span></span>`);
+    if(r.includes("worn")||r.includes("used")) out.push(`<span class="chip bad">👁 Used / worn item<span class="src">Nebius</span></span>`);
+    return out.join("");
   }
 
-  async function poll() {
-    try {
-      const res = await fetch(FEED_URL, { cache: "no-store" });
-      const json = await res.json();
-      const cases = Array.isArray(json.data) ? json.data : [];
-      document.getElementById("live-text").textContent = "live";
-
-      const grid = document.getElementById("grid");
-      document.getElementById("empty").style.display = cases.length ? "none" : "block";
-
-      const counts = { total: cases.length, auto_approve: 0, escalate: 0, deny: 0 };
-      grid.innerHTML = cases.map(c => {
-        if (counts[c.verdict] !== undefined) counts[c.verdict]++;
-        const fresh = !seen.has(c.id);
-        return cardHTML(c, fresh);
-      }).join("");
-      cases.forEach(c => seen.add(c.id));
-
-      document.getElementById("s-total").textContent = counts.total;
-      document.getElementById("s-approve").textContent = counts.auto_approve;
-      document.getElementById("s-escalate").textContent = counts.escalate;
-      document.getElementById("s-deny").textContent = counts.deny;
-    } catch (e) {
-      document.getElementById("live-text").textContent = "reconnecting…";
-    }
+  function render(){
+    const f=cases.filter(c=> filter==="all"?true : filter==="pending"?c.status==="pending" : c.final_decision===filter );
+    $("rows").innerHTML = f.map(c=>`
+      <tr data-id="${c.id}" class="${seen.has(c.id)?"":"fresh"}">
+        <td>#${esc(c.order_id)}</td>
+        <td class="cust"><div class="nm">${esc(c.customer_name||"—")}</div><div class="em">${esc(c.customer_email||"")}</div></td>
+        <td>${esc(c.product_name||"—")}<br><span class="stat">${money(c.price,c.currency)}</span></td>
+        <td><span class="vbadge v-${esc(c.verdict)}">${vlabel(c.verdict)}</span></td>
+        <td class="score" style="color:${scoreColor(c.fraud_score)}">${Number(c.fraud_score||0).toFixed(2)}</td>
+        <td class="stat">${c.status==="pending"?'<span class="pill pending">● Pending</span>':'<span class="pill resolved">'+esc(c.final_decision||"resolved")+'</span>'}</td>
+        <td class="stat">${c.created_at?ago(c.created_at)+" ago":""}</td>
+      </tr>`).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px">No tickets in this view.</td></tr>`;
+    cases.forEach(c=>seen.add(c.id));
+    [...$("rows").querySelectorAll("tr[data-id]")].forEach(tr=>tr.onclick=()=>openDrawer(tr.dataset.id));
   }
-  poll();
-  setInterval(poll, POLL_MS);
+
+  function kpis(){
+    const pending=cases.filter(c=>c.status==="pending").length;
+    const approved=cases.filter(c=>c.final_decision==="approved").length;
+    const denied=cases.filter(c=>c.final_decision==="denied").length;
+    const loss=cases.filter(c=>c.final_decision==="denied").reduce((s,c)=>s+Number(c.price||0),0);
+    $("k-pending").textContent=pending; $("b-pending").textContent=pending;
+    $("k-approved").textContent=approved; $("k-denied").textContent=denied;
+    $("k-loss").textContent=money(loss,"USD");
+  }
+
+  function openDrawer(id){
+    const c=cases.find(x=>x.id===id); if(!c)return; openId=id;
+    const pending=c.status==="pending";
+    $("drawer").innerHTML=`
+      <div class="dh"><h2>Order #${esc(c.order_id)} <span class="vbadge v-${esc(c.verdict)}" style="margin-left:6px">${vlabel(c.verdict)}</span></h2><button class="x" onclick="closeDrawer()">×</button></div>
+      <div class="db">
+        <div class="sec"><h3>Customer</h3>
+          <div class="kv"><span>Name</span><b>${esc(c.customer_name||"—")}</b></div>
+          <div class="kv"><span>Email</span><span>${esc(c.customer_email||"—")}</span></div>
+        </div>
+        <div class="sec"><h3>Purchase</h3>
+          <div class="kv"><span>Product</span><b>${esc(c.product_name||"—")}</b></div>
+          <div class="kv"><span>Price</span><span>${money(c.price,c.currency)}</span></div>
+          <div class="kv"><span>Order date</span><span>${esc(c.order_date||"—")}</span></div>
+          <div class="kv"><span>Payment</span><span>•••• ${esc(c.payment_last4||"----")}</span></div>
+          <div class="kv"><span>Return reason</span><span>"${esc(c.reason||"—")}"</span></div>
+        </div>
+        <div class="sec"><h3>Evidence</h3>
+          <div class="imgs">
+            <figure><img src="${esc(c.photo_url||"")}" onerror="this.style.opacity=.2"><figcaption>Customer photo</figcaption></figure>
+            <figure><img src="${esc(c.ordered_image_url||"")}" onerror="this.style.opacity=.2"><figcaption>Ordered product</figcaption></figure>
+          </div>
+        </div>
+        <div class="sec"><h3>AI assessment</h3>
+          <div class="scorerow"><span class="stat">Fraud score</span><div class="bar"><span style="width:${Math.round((c.fraud_score||0)*100)}%;background:${scoreColor(c.fraud_score)}"></span></div><b style="color:${scoreColor(c.fraud_score)}">${Number(c.fraud_score||0).toFixed(2)}</b></div>
+          <div class="chips">${chips(c)||'<span class="chip good">No fraud indicators</span>'}</div>
+          <ul class="reasons">${(c.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
+        </div>
+        ${!pending?`<div class="sec"><h3>Resolution</h3><div class="resolution"><div class="big" style="color:${c.final_decision==="approved"?"var(--green)":"var(--red)"}">${esc((c.final_decision||"").toUpperCase())}</div>by ${esc(c.resolved_by||"—")}${c.admin_note?` · "${esc(c.admin_note)}"`:""}</div></div>`:""}
+      </div>
+      ${pending?`<div class="actions"><textarea id="note" placeholder="Add a note (optional)…"></textarea><div class="btns"><button class="btn approve" onclick="resolveCase('${c.id}','approved')">Approve refund</button><button class="btn deny" onclick="resolveCase('${c.id}','denied')">Deny</button></div></div>`:""}
+    `;
+    $("drawer").classList.add("on"); $("scrim").classList.add("on");
+  }
+  window.closeDrawer=()=>{openId=null;$("drawer").classList.remove("on");$("scrim").classList.remove("on");};
+  $("scrim").onclick=window.closeDrawer;
+
+  window.resolveCase=async(id,decision)=>{
+    const note=($("note")||{}).value||"";
+    [...document.querySelectorAll(".btn")].forEach(b=>b.disabled=true);
+    try{
+      await fetch(`${FN}/resolve-case`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,decision,admin:"Luís (Store Admin)",note})});
+      await load(); closeDrawer();
+    }catch(e){ alert("Failed: "+e.message); }
+  };
+
+  $("tabs").querySelectorAll(".tab").forEach(t=>t.onclick=()=>{filter=t.dataset.f;$("tabs").querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");render();});
+
+  async function load(){
+    try{ const {data}=await (await fetch(`${FN}/cases-feed`,{cache:"no-store"})).json(); cases=data||[]; $("liveText").textContent="live"; kpis(); render(); if(openId)openDrawer(openId); }
+    catch(e){ $("liveText").textContent="reconnecting…"; }
+  }
+  load(); setInterval(()=>{ if(!openId) load(); },4000);
 </script>
 </body>
 </html>

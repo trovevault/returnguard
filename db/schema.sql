@@ -1,12 +1,12 @@
 -- ReturnGuard — InsForge (PostgreSQL) schema
 -- Apply with: insforge db query "$(cat db/schema.sql)"
 
--- Decision tickets: one row per resolved return request (read by the ops dashboard).
+-- Decision tickets: one row per return request (read by the ops dashboard).
 CREATE TABLE IF NOT EXISTS cases (
   id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id             text NOT NULL,
   reason               text,
-  verdict              text CHECK (verdict IN ('auto_approve','escalate','deny')),
+  verdict              text CHECK (verdict IN ('auto_approve','escalate','deny')),  -- AI recommendation
   fraud_score          numeric,
   variant_match        boolean,           -- Nebius vision: photo matches the ordered product
   resale_flag          boolean,           -- Apify reverse-image: photo found on a resale marketplace
@@ -15,6 +15,12 @@ CREATE TABLE IF NOT EXISTS cases (
   reasons              jsonb DEFAULT '[]'::jsonb,
   photo_url            text,
   listing_url          text,
+  -- ticket workflow
+  status               text DEFAULT 'resolved',   -- 'pending' (awaiting admin) | 'resolved'
+  final_decision       text,                       -- 'approved' | 'denied' | null
+  resolved_by          text,                       -- 'ReturnGuard AI' or an admin name
+  resolved_at          timestamptz,
+  admin_note           text,
   created_at           timestamptz NOT NULL DEFAULT now()
 );
 
@@ -26,10 +32,17 @@ CREATE TABLE IF NOT EXISTS uploads (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Reference of what each order actually contained (vision compares against this).
+-- Order reference: what each order contained + customer/purchase details for the dashboard.
 CREATE TABLE IF NOT EXISTS orders (
   order_id          text PRIMARY KEY,
-  product_image_url text,
+  product_image_url text,           -- ordered product image (vision compares against this)
   variant_label     text,
+  customer_name     text,
+  customer_email    text,
+  product_name      text,
+  price             numeric,
+  currency          text DEFAULT 'USD',
+  order_date        date,
+  payment_last4     text,
   created_at        timestamptz NOT NULL DEFAULT now()
 );

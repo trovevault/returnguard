@@ -14,6 +14,8 @@ type Verdict = 'auto_approve' | 'escalate' | 'deny';
 function decide(signals: {
     photoProvided: boolean;
     looksLikeStock: boolean | null;  // vision: catalog/stock image vs the customer's own snapshot
+    appearsUsed: boolean | null;     // vision: signs of prior use/wear
+    beingWorn: boolean | null;       // vision: item is currently being worn
     resaleFlag: boolean;
     resaleDomains: string[];
     variantMatch: boolean | null;    // null = no reference image to compare against
@@ -26,6 +28,17 @@ function decide(signals: {
 
     let score = 0;
     const reasons: string[] = [];
+
+    // Eligibility layer: worn/used items are not returnable. "Being worn" is a hard
+    // policy block (decisive deny); general wear is a softer contributing signal.
+    if (signals.beingWorn === true) {
+        score += 0.9;
+        reasons.push('The item is shown being worn — used items are not eligible for a refund under our returns policy');
+    }
+    if (signals.appearsUsed === true) {
+        score += 0.25;
+        reasons.push('The item shows clear signs of use and wear');
+    }
 
     if (signals.looksLikeStock === true) {
         score += 0.45;
@@ -89,49 +102,64 @@ async function toDataUrl(url: string): Promise<string | null> {
     }
 }
 
-// Nebius vision — always analyzes the customer photo (is it a stock/catalog image vs
-// the customer's own snapshot? does damage look genuine?). If a reference image of the
-// ordered product is supplied, also checks variant match.
-async function analyzePhoto(customerUrl: string, referenceUrl: string | null) {
-    const NULLS = { variantMatch: null as boolean | null, damageGenuine: null as boolean | null, looksLikeStock: null as boolean | null };
+async function nebiusJSON(content: unknown[]): Promise<Record<string, unknown>> {
     const key = Deno.env.get('NEBIUS_API_KEY');
-    if (!key) return NULLS;
-
-    const custData = await toDataUrl(customerUrl);
-    if (!custData) return NULLS;
-    const refData = referenceUrl ? await toDataUrl(referenceUrl) : null;
-
-    const content: unknown[] = [];
-    if (refData) {
-        content.push({ type: 'text', text: 'Image A is the official photo of the product the customer ordered. Image B is the photo the customer uploaded for a return. Return strict JSON {"same_variant":bool,"looks_like_stock_photo":bool,"damage_looks_genuine":bool,"confidence":0-1}. same_variant=false if Image B is a different color/model/product than Image A. looks_like_stock_photo=true ONLY if Image B is clearly a professional catalog/marketing product photo (studio lighting, clean or white background, no real-world setting) rather than a casual photo the customer took themselves.' });
-        content.push({ type: 'image_url', image_url: { url: refData } });
-        content.push({ type: 'image_url', image_url: { url: custData } });
-    } else {
-        content.push({ type: 'text', text: 'This is the photo a customer uploaded for a product return. Return strict JSON {"looks_like_stock_photo":bool,"damage_looks_genuine":bool,"confidence":0-1}. looks_like_stock_photo=true ONLY if it is clearly a professional catalog/marketing product photo (studio lighting, clean or white background, no real-world setting) rather than a casual photo the customer took themselves.' });
-        content.push({ type: 'image_url', image_url: { url: custData } });
-    }
-
+    if (!key) return {};
     try {
         const res = await fetch('https://api.tokenfactory.nebius.com/v1/chat/completions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
             body: JSON.stringify({
                 model: 'Qwen/Qwen2.5-VL-72B-Instruct',
+                temperature: 0,
                 response_format: { type: 'json_object' },
                 messages: [{ role: 'user', content }],
                 signal: AbortSignal.timeout(25000),
             }),
         });
         const data = await res.json();
-        const p = JSON.parse(data.choices?.[0]?.message?.content ?? '{}');
-        return {
-            variantMatch: typeof p.same_variant === 'boolean' ? p.same_variant : null,
-            damageGenuine: typeof p.damage_looks_genuine === 'boolean' ? p.damage_looks_genuine : null,
-            looksLikeStock: typeof p.looks_like_stock_photo === 'boolean' ? p.looks_like_stock_photo : null,
-        };
+        return JSON.parse(data.choices?.[0]?.message?.content ?? '{}');
     } catch {
-        return NULLS;
+        return {};
     }
+}
+
+const asBool = (v: unknown): boolean | null => (typeof v === 'boolean' ? v : null);
+
+// Nebius vision. Two independent checks so each is deterministic:
+//  - inspection of the CUSTOMER photo alone (stock vs real, used/worn, damage)
+//  - variant comparison against the ordered product image (only if we have one)
+// Keeping them separate stops a varying reference image from destabilizing the
+// used/worn read of the customer's own photo.
+async function analyzePhoto(customerUrl: string, referenceUrl: string | null) {
+    const NULLS = { variantMatch: null, damageGenuine: null, looksLikeStock: null, appearsUsed: null, beingWorn: null };
+    if (!Deno.env.get('NEBIUS_API_KEY')) return NULLS;
+
+    const custData = await toDataUrl(customerUrl);
+    if (!custData) return NULLS;
+
+    const inspectPromise = nebiusJSON([
+        { type: 'text', text: 'This is the photo a customer uploaded for a product return. Return strict JSON {"looks_like_stock_photo":bool,"appears_used":bool,"being_worn":bool,"damage_looks_genuine":bool}. being_worn=true if the item is currently on a person\'s body or feet (e.g. shoes on feet, clothing being worn). appears_used=true if the item shows clear signs of prior use or wear (scuffs, dirt, creasing, worn soles, stains). looks_like_stock_photo=true ONLY if this is clearly a professional catalog/marketing product photo (studio lighting, clean/white background) rather than a casual photo the customer took themselves.' },
+        { type: 'image_url', image_url: { url: custData } },
+    ]);
+
+    const refData = referenceUrl ? await toDataUrl(referenceUrl) : null;
+    const variantPromise = refData
+        ? nebiusJSON([
+            { type: 'text', text: 'Image A is the product the customer ordered. Image B is the photo the customer uploaded. Return strict JSON {"same_variant":bool}. same_variant=false if Image B is a different color, model or product than Image A.' },
+            { type: 'image_url', image_url: { url: refData } },
+            { type: 'image_url', image_url: { url: custData } },
+        ])
+        : Promise.resolve({} as Record<string, unknown>);
+
+    const [insp, varr] = await Promise.all([inspectPromise, variantPromise]);
+    return {
+        looksLikeStock: asBool(insp.looks_like_stock_photo),
+        appearsUsed: asBool(insp.appears_used),
+        beingWorn: asBool(insp.being_worn),
+        damageGenuine: asBool(insp.damage_looks_genuine),
+        variantMatch: asBool(varr.same_variant),
+    };
 }
 
 export default async function (req: Request): Promise<Response> {
@@ -199,17 +227,20 @@ export default async function (req: Request): Promise<Response> {
     const referenceImage = orderedImage ?? listingImage;
     const vision = photoUrl
         ? await analyzePhoto(photoUrl, referenceImage)
-        : { variantMatch: null, damageGenuine: null, looksLikeStock: null };
+        : { variantMatch: null, damageGenuine: null, looksLikeStock: null, appearsUsed: null, beingWorn: null };
 
     // 4. Fuse → verdict.
     const { verdict, fraudScore, reasons } = decide({
         photoProvided: !!photoUrl,
         looksLikeStock: vision.looksLikeStock,
+        appearsUsed: vision.appearsUsed,
+        beingWorn: vision.beingWorn,
         resaleFlag, resaleDomains,
         variantMatch: vision.variantMatch, damageGenuine: vision.damageGenuine,
     });
 
-    // 5. Persist the case.
+    // 5. Persist the case. Auto-decisions resolve immediately; escalations wait for an admin.
+    const isEscalate = verdict === 'escalate';
     const caseRow = {
         order_id: orderId,
         reason: reason || null,
@@ -221,6 +252,10 @@ export default async function (req: Request): Promise<Response> {
         reasons,
         photo_url: photoUrl,
         listing_url: listingImage,
+        status: isEscalate ? 'pending' : 'resolved',
+        final_decision: verdict === 'auto_approve' ? 'approved' : verdict === 'deny' ? 'denied' : null,
+        resolved_by: isEscalate ? null : 'ReturnGuard AI',
+        resolved_at: isEscalate ? null : new Date().toISOString(),
     };
     const { data: inserted } = await client.database.from('cases').insert([caseRow]).select();
 

@@ -12,29 +12,39 @@ const APIFY_ACTOR = 'luis.pinto~returnguard-reverse-image-check';
 type Verdict = 'auto_approve' | 'escalate' | 'deny';
 
 function decide(signals: {
+    photoProvided: boolean;
+    looksLikeStock: boolean | null;  // vision: catalog/stock image vs the customer's own snapshot
     resaleFlag: boolean;
     resaleDomains: string[];
-    variantMatch: boolean | null;   // null = vision not run yet
+    variantMatch: boolean | null;    // null = no reference image to compare against
     damageGenuine: boolean | null;
-    orderId: string;
 }): { verdict: Verdict; fraudScore: number; reasons: string[] } {
+    // Can't verify a return without a photo of the item — never auto-approve blind.
+    if (!signals.photoProvided) {
+        return { verdict: 'escalate', fraudScore: 0.5, reasons: ['No photo of the item was provided, so the return needs manual review'] };
+    }
+
     let score = 0;
     const reasons: string[] = [];
 
+    if (signals.looksLikeStock === true) {
+        score += 0.45;
+        reasons.push('Uploaded image looks like a stock/online product photo, not a photo of the actual item received');
+    }
     if (signals.resaleFlag) {
-        score += 0.55;
-        reasons.push(`Exact image found listed for resale on ${signals.resaleDomains.join(', ') || 'a marketplace'}`);
+        score += 0.45;
+        reasons.push(`This image was found in online listings (${signals.resaleDomains.join(', ') || 'a marketplace'})`);
     }
     if (signals.variantMatch === false) {
         score += 0.35;
         reasons.push('Photo does not match the ordered product/variant');
     } else if (signals.variantMatch === true) {
         score -= 0.15;
-        reasons.push('Photo matches the variant on the order');
+        reasons.push('Photo matches the ordered product');
     }
-    // Damage only counts as a risk signal when the customer cited damage AND there
-    // is already another fraud indicator — avoids flagging "no visible damage" on honest returns.
-    if (signals.damageGenuine === false && signals.resaleFlag) {
+    // Damage only counts as a risk signal alongside another indicator —
+    // avoids flagging "no visible damage" on honest returns.
+    if (signals.damageGenuine === false && (signals.resaleFlag || signals.looksLikeStock === true)) {
         score += 0.10;
         reasons.push('Reported damage does not look genuine');
     }
@@ -42,9 +52,8 @@ function decide(signals: {
     score = Math.max(0, Math.min(1, score));
     const verdict: Verdict = score > 0.6 ? 'deny' : score >= 0.3 ? 'escalate' : 'auto_approve';
 
-    // Clean, non-contradictory messaging on approvals.
     if (verdict === 'auto_approve') {
-        return { verdict, fraudScore: Number(score.toFixed(2)), reasons: ['Photo matches the order; no resale or product mismatch found'] };
+        return { verdict, fraudScore: Number(score.toFixed(2)), reasons: ['Photo appears to be a genuine photo of the item, matching the order with no resale match'] };
     }
     return { verdict, fraudScore: Number(score.toFixed(2)), reasons };
 }
@@ -80,14 +89,27 @@ async function toDataUrl(url: string): Promise<string | null> {
     }
 }
 
-// Nebius vision — compares the customer photo to the reference (official/listing)
-// image. Returns null fields until NEBIUS_API_KEY is set or if either image is missing.
-async function visionCompare(customerUrl: string, referenceUrl: string | null) {
+// Nebius vision — always analyzes the customer photo (is it a stock/catalog image vs
+// the customer's own snapshot? does damage look genuine?). If a reference image of the
+// ordered product is supplied, also checks variant match.
+async function analyzePhoto(customerUrl: string, referenceUrl: string | null) {
+    const NULLS = { variantMatch: null as boolean | null, damageGenuine: null as boolean | null, looksLikeStock: null as boolean | null };
     const key = Deno.env.get('NEBIUS_API_KEY');
-    if (!key || !referenceUrl) return { variantMatch: null, damageGenuine: null };
+    if (!key) return NULLS;
 
-    const [refData, custData] = await Promise.all([toDataUrl(referenceUrl), toDataUrl(customerUrl)]);
-    if (!refData || !custData) return { variantMatch: null, damageGenuine: null };
+    const custData = await toDataUrl(customerUrl);
+    if (!custData) return NULLS;
+    const refData = referenceUrl ? await toDataUrl(referenceUrl) : null;
+
+    const content: unknown[] = [];
+    if (refData) {
+        content.push({ type: 'text', text: 'Image A is the official photo of the product the customer ordered. Image B is the photo the customer uploaded for a return. Return strict JSON {"same_variant":bool,"looks_like_stock_photo":bool,"damage_looks_genuine":bool,"confidence":0-1}. same_variant=false if Image B is a different color/model/product than Image A. looks_like_stock_photo=true ONLY if Image B is clearly a professional catalog/marketing product photo (studio lighting, clean or white background, no real-world setting) rather than a casual photo the customer took themselves.' });
+        content.push({ type: 'image_url', image_url: { url: refData } });
+        content.push({ type: 'image_url', image_url: { url: custData } });
+    } else {
+        content.push({ type: 'text', text: 'This is the photo a customer uploaded for a product return. Return strict JSON {"looks_like_stock_photo":bool,"damage_looks_genuine":bool,"confidence":0-1}. looks_like_stock_photo=true ONLY if it is clearly a professional catalog/marketing product photo (studio lighting, clean or white background, no real-world setting) rather than a casual photo the customer took themselves.' });
+        content.push({ type: 'image_url', image_url: { url: custData } });
+    }
 
     try {
         const res = await fetch('https://api.tokenfactory.nebius.com/v1/chat/completions', {
@@ -96,25 +118,19 @@ async function visionCompare(customerUrl: string, referenceUrl: string | null) {
             body: JSON.stringify({
                 model: 'Qwen/Qwen2.5-VL-72B-Instruct',
                 response_format: { type: 'json_object' },
-                messages: [{
-                    role: 'user',
-                    content: [
-                        { type: 'text', text: 'Image A is the official product the customer ordered. Image B is the customer photo of what they received. Return strict JSON {"same_variant":bool,"damage_looks_genuine":bool,"confidence":0-1}. same_variant is false if the color/model/product differs.' },
-                        { type: 'image_url', image_url: { url: refData } },
-                        { type: 'image_url', image_url: { url: custData } },
-                    ],
-                }],
+                messages: [{ role: 'user', content }],
                 signal: AbortSignal.timeout(25000),
             }),
         });
         const data = await res.json();
-        const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? '{}');
+        const p = JSON.parse(data.choices?.[0]?.message?.content ?? '{}');
         return {
-            variantMatch: typeof parsed.same_variant === 'boolean' ? parsed.same_variant : null,
-            damageGenuine: typeof parsed.damage_looks_genuine === 'boolean' ? parsed.damage_looks_genuine : null,
+            variantMatch: typeof p.same_variant === 'boolean' ? p.same_variant : null,
+            damageGenuine: typeof p.damage_looks_genuine === 'boolean' ? p.damage_looks_genuine : null,
+            looksLikeStock: typeof p.looks_like_stock_photo === 'boolean' ? p.looks_like_stock_photo : null,
         };
     } catch {
-        return { variantMatch: null, damageGenuine: null };
+        return NULLS;
     }
 }
 
@@ -178,16 +194,19 @@ export default async function (req: Request): Promise<Response> {
         } catch { /* degrade to no-evidence */ }
     }
 
-    // 3. Nebius vision (variant / damage). Reference = the ordered product image
-    //    (true "wrong variant" detection), falling back to the Lens listing image.
+    // 3. Nebius vision — always analyze the customer photo (stock vs real, damage);
+    //    compare variant against the ordered product image when we have one.
     const referenceImage = orderedImage ?? listingImage;
-    const vision = photoUrl ? await visionCompare(photoUrl, referenceImage) : { variantMatch: null, damageGenuine: null };
+    const vision = photoUrl
+        ? await analyzePhoto(photoUrl, referenceImage)
+        : { variantMatch: null, damageGenuine: null, looksLikeStock: null };
 
     // 4. Fuse → verdict.
     const { verdict, fraudScore, reasons } = decide({
+        photoProvided: !!photoUrl,
+        looksLikeStock: vision.looksLikeStock,
         resaleFlag, resaleDomains,
         variantMatch: vision.variantMatch, damageGenuine: vision.damageGenuine,
-        orderId,
     });
 
     // 5. Persist the case.

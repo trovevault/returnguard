@@ -32,6 +32,15 @@ CREATE TABLE IF NOT EXISTS uploads (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Latest return-form context (order_id + reason) captured when a call starts, so the
+-- verdict uses the form's order details rather than the live voice transcript.
+CREATE TABLE IF NOT EXISTS demo_intent (
+  id         text PRIMARY KEY DEFAULT 'current',
+  order_id   text,
+  reason     text,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- Order reference: what each order contained + customer/purchase details for the dashboard.
 CREATE TABLE IF NOT EXISTS orders (
   order_id          text PRIMARY KEY,

@@ -175,14 +175,24 @@ export default async function (req: Request): Promise<Response> {
     // Vapi custom-tool webhook shape vs. direct test call.
     const toolCall = body?.message?.toolCallList?.[0] ?? null;
     const args = toolCall?.function?.arguments ?? body;
-    const orderId = String(args.order_id ?? '').trim();
-    const reason = String(args.reason ?? '').trim();
     const toolCallId = toolCall?.id ?? null;
 
     const client = createClient({
         baseUrl: Deno.env.get('INSFORGE_BASE_URL'),
         anonKey: Deno.env.get('ANON_KEY'),
     });
+
+    // The returns web form is the source of truth for order_id + reason (recorded via
+    // set-intent when the call starts); fall back to the values the agent passes.
+    let orderId = String(args.order_id ?? '').trim();
+    let reason = String(args.reason ?? '').trim();
+    try {
+        const { data: intent } = await client.database.from('demo_intent').select('*').eq('id', 'current').limit(1);
+        if (intent?.[0]?.order_id) {
+            orderId = String(intent[0].order_id).trim();
+            reason = String(intent[0].reason ?? reason);
+        }
+    } catch { /* not in demo mode */ }
 
     const respond = (spoken: string, caseRow: unknown) => {
         const payload = toolCallId

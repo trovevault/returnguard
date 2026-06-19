@@ -136,7 +136,7 @@
 
       <div class="callbox" id="callbox">
         <div class="status"><span class="pulse"></span><span id="statusText">Connecting…</span></div>
-        <div class="transcript" id="transcript"></div>
+        <div style="font-size:13px;color:var(--muted);padding:6px 2px;line-height:1.5">🔒 Connected to the returns concierge. Your item is being verified live — listen for the decision, then your ticket appears below.</div>
       </div>
 
       <div class="outcome" id="outcome">
@@ -222,16 +222,18 @@
     if (PUBLIC_KEY.startsWith("REPLACE")) { $("note").textContent = "⚠ Vapi public key not set yet — voice call disabled."; return; }
     if (!photoUploaded) $("note").textContent = "Tip: upload a photo so the concierge can verify your item.";
 
+    // Record the order details from the form (source of truth) so the verdict uses them
+    try { await fetch(`${FN}/set-intent`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_id: order, reason: $("reason").value.trim() }) }); } catch {}
+
     // snapshot existing cases for this order so we only react to the new ticket
     try { const { data } = await (await fetch(`${FN}/cases-feed`)).json(); (data||[]).filter(c=>c.order_id===order).forEach(c=>knownCaseIds.add(c.id)); } catch {}
 
     vapi = new Vapi(PUBLIC_KEY);
-    vapi.on("call-start", () => { setStatus("Connected — speak to the concierge"); });
+    vapi.on("call-start", () => { setStatus("Connected — your item is being verified live"); });
     vapi.on("call-end", () => { setStatus("Call ended — finalizing your ticket…"); calling = false; $("callBtn").textContent = "📞 Talk to our returns concierge"; $("callBtn").classList.remove("end"); pollTimer = setInterval(() => pollOutcome(order), 2000); pollOutcome(order); });
-    vapi.on("message", (m) => { if (m.type === "transcript" && m.transcriptType === "final") addMsg(m.role, m.transcript); });
     vapi.on("error", (e) => { setStatus("Error: " + (e?.message || "call failed")); calling = false; });
 
-    $("callbox").classList.add("on"); $("transcript").innerHTML = ""; $("outcome").className = "outcome";
+    $("callbox").classList.add("on"); $("outcome").className = "outcome";
     setStatus("Connecting…");
     calling = true; $("callBtn").textContent = "■ End call"; $("callBtn").classList.add("end");
     vapi.start(ASSISTANT_ID, { variableValues: { order_id: order, reason: $("reason").value.trim() } });

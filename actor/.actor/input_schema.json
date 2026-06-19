@@ -1,0 +1,36 @@
+{
+    "title": "ReturnGuard Reverse Image Check",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "imageUrl": {
+            "title": "Image URL",
+            "type": "string",
+            "description": "Publicly fetchable URL of the customer's product photo to reverse-search.",
+            "editor": "textfield",
+            "example": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=640"
+        },
+        "serpApiKey": {
+            "title": "SerpApi key",
+            "type": "string",
+            "description": "SerpApi API key (serpapi.com). Used for the Google Lens engine.",
+            "editor": "textfield",
+            "isSecret": true
+        },
+        "resaleDomains": {
+            "title": "Resale domains to flag",
+            "type": "array",
+            "description": "If a match's domain is in this list, it counts as a resale-fraud signal.",
+            "editor": "stringList",
+            "default": ["ebay.com", "mercari.com", "poshmark.com", "facebook.com", "depop.com", "offerup.com", "aliexpress.com", "etsy.com", "goat.com", "stockx.com", "grailed.com", "vinted.com", "vestiairecollective.com"]
+        },
+        "maxResults": {
+            "title": "Max matches",
+            "type": "integer",
+            "description": "Maximum number of visual matches to return.",
+            "editor": "number",
+            "default": 20
+        }
+    },
+    "required": ["imageUrl"]
+}

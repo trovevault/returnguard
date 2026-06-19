@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# local Apify run artifacts
+storage/
+apify_storage/
+crawlee_storage/
+
+# InsForge CLI credentials (contains project api_key — never commit)
+.insforge/
+
+# secrets
+.env
+.env.local
+*.local
+
+# misc
+*.log
+.DS_Store

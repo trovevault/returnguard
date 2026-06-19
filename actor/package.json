@@ -1,0 +1,16 @@
+{
+    "name": "returnguard-reverse-image-check",
+    "version": "0.1.0",
+    "type": "module",
+    "description": "Reverse image search (SerpApi Google Lens) for ReturnGuard return-fraud detection.",
+    "main": "main.js",
+    "scripts": {
+        "start": "node main.js"
+    },
+    "dependencies": {
+        "apify": "^3"
+    },
+    "engines": {
+        "node": ">=20"
+    }
+}

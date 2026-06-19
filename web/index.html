@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pearl of the Atlantic Boutique — Returns</title>
+<style>
+  :root {
+    --ink: #122a32;
+    --teal: #0d6b73;
+    --teal-d: #0a565c;
+    --sand: #f5efe6;
+    --cream: #fbf8f3;
+    --pearl: #ffffff;
+    --gold: #c9a24b;
+    --line: #e6ddcf;
+    --muted: #6f7d80;
+    --green: #1f8a52;
+    --amber: #c8881a;
+    --red: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .serif { font-family: Georgia, "Times New Roman", serif; }
+
+  nav { display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px; background: var(--pearl); border-bottom: 1px solid var(--line); }
+  nav .logo { display: flex; align-items: center; gap: 10px; }
+  nav .logo .mark { width: 34px; height: 34px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, #d8e6e4 40%, var(--teal) 120%);
+    box-shadow: inset 0 0 6px rgba(0,0,0,.15); }
+  nav .logo b { font-size: 17px; letter-spacing: .3px; }
+  nav .links { display: flex; gap: 22px; font-size: 14px; color: var(--muted); }
+  nav .links span:last-child { color: var(--teal); font-weight: 600; }
+
+  .hero { padding: 48px 32px 28px; max-width: 920px; margin: 0 auto; text-align: center; }
+  .hero .eyebrow { color: var(--gold); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+  .hero h1 { font-size: 36px; margin: 10px 0 8px; line-height: 1.15; }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 560px; margin: 0 auto; }
+
+  main { max-width: 720px; margin: 0 auto 60px; padding: 0 20px; }
+  .card { background: var(--pearl); border: 1px solid var(--line); border-radius: 16px;
+    padding: 26px; box-shadow: 0 6px 24px rgba(18,42,50,.06); }
+
+  .step { margin-bottom: 20px; }
+  .step label { display: block; font-weight: 600; margin-bottom: 7px; font-size: 14px; }
+  .step .hint { color: var(--muted); font-size: 12.5px; margin-top: 5px; }
+  input[type=text], textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--line);
+    border-radius: 10px; font-size: 15px; font-family: inherit; background: var(--cream); color: var(--ink); }
+  textarea { resize: vertical; min-height: 64px; }
+
+  .uploader { border: 1.5px dashed var(--line); border-radius: 12px; padding: 16px; text-align: center;
+    background: var(--cream); cursor: pointer; transition: border-color .2s; }
+  .uploader:hover { border-color: var(--teal); }
+  .uploader.has { border-style: solid; border-color: var(--green); }
+  .uploader img { max-height: 120px; border-radius: 8px; margin-top: 10px; }
+  .uploader .state { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .uploader .state.ok { color: var(--green); font-weight: 600; }
+
+  .cta { width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer;
+    background: var(--teal); color: #fff; font-size: 16px; font-weight: 700; letter-spacing: .3px;
+    display: flex; align-items: center; justify-content: center; gap: 9px; transition: background .2s; }
+  .cta:hover { background: var(--teal-d); }
+  .cta:disabled { background: #b6c6c6; cursor: not-allowed; }
+  .cta.end { background: var(--red); }
+
+  .callbox { margin-top: 20px; display: none; }
+  .callbox.on { display: block; }
+  .status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
+    padding: 6px 12px; border-radius: 999px; background: var(--sand); color: var(--teal); margin-bottom: 12px; }
+  .status .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--teal); animation: p 1.4s infinite; }
+  @keyframes p { 0%{opacity:.4} 50%{opacity:1} 100%{opacity:.4} }
+  .transcript { background: var(--cream); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; max-height: 240px; overflow-y: auto; font-size: 14px; }
+  .msg { margin-bottom: 9px; line-height: 1.4; }
+  .msg .who { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  .msg.assistant .who { color: var(--teal); }
+  .msg.user .who { color: var(--gold); }
+
+  .outcome { margin-top: 20px; display: none; border-radius: 14px; padding: 22px; border: 1px solid var(--line); }
+  .outcome.on { display: block; }
+  .outcome.approve { background: #effaf2; border-color: #bfe6cc; }
+  .outcome.escalate { background: #fdf6e8; border-color: #f0dcae; }
+  .outcome.deny { background: #fdeeec; border-color: #f2c4bd; }
+  .outcome .tk { font-size: 12px; color: var(--muted); letter-spacing: .5px; }
+  .outcome h3 { margin: 6px 0 6px; font-size: 22px; }
+  .outcome.approve h3 { color: var(--green); }
+  .outcome.escalate h3 { color: var(--amber); }
+  .outcome.deny h3 { color: var(--red); }
+  .outcome p { margin: 0; color: var(--ink); font-size: 14.5px; line-height: 1.5; }
+  .outcome ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+
+  .note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 14px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 28px; border-top: 1px solid var(--line); }
+  footer a { color: var(--teal); }
+</style>
+</head>
+<body>
+  <nav>
+    <div class="logo"><span class="mark"></span><b class="serif">Pearl of the Atlantic Boutique</b></div>
+    <div class="links"><span>Shop</span><span>Our Story</span><span>Returns</span></div>
+  </nav>
+
+  <section class="hero">
+    <div class="eyebrow">Returns &amp; Refunds</div>
+    <h1 class="serif">Sorted in minutes, with a real conversation.</h1>
+    <p>Start a return with our voice concierge. Tell us what happened, share a photo, and we'll resolve it on the spot.</p>
+  </section>
+
+  <main>
+    <div class="card">
+      <div class="step">
+        <label for="order">1 · Your order number</label>
+        <input type="text" id="order" placeholder="e.g. 5678" autocomplete="off" />
+        <div class="hint">Demo orders: <b>1234</b> (handbag), <b>5678</b> (sneakers). Tell the concierge this number during the call.</div>
+      </div>
+
+      <div class="step">
+        <label for="reason">2 · What's the issue? <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+        <textarea id="reason" placeholder="e.g. The strap broke after a week"></textarea>
+      </div>
+
+      <div class="step">
+        <label>3 · Upload a photo of the item</label>
+        <div class="uploader" id="drop">
+          <input type="file" id="file" accept="image/*" hidden />
+          <div id="dropText">📷 Tap to add a photo</div>
+          <img id="preview" hidden />
+          <div class="state" id="upState"></div>
+        </div>
+      </div>
+
+      <button class="cta" id="callBtn">📞 Talk to our returns concierge</button>
+      <div class="note" id="note"></div>
+
+      <div class="callbox" id="callbox">
+        <div class="status"><span class="pulse"></span><span id="statusText">Connecting…</span></div>
+        <div class="transcript" id="transcript"></div>
+      </div>
+
+      <div class="outcome" id="outcome">
+        <div class="tk" id="ticket"></div>
+        <h3 id="outTitle"></h3>
+        <p id="outBody"></p>
+        <ul id="outReasons"></ul>
+      </div>
+    </div>
+  </main>
+
+  <footer>Pearl of the Atlantic Boutique · Returns handled by ReturnGuard — voice (Vapi), vision (Nebius), live web checks (Apify). <a href="ops.html">Returns ops →</a></footer>
+
+<script type="module">
+  import Vapi from "https://esm.sh/@vapi-ai/web@2.5.2";
+
+  const PUBLIC_KEY = "ddd62e37-58af-4895-b2ee-75da95fcf32b";
+  const ASSISTANT_ID = "b4b7d088-2d95-49c8-b580-a2cf164f6eaf";
+  const FN = "https://zz3ntem9.us-east.insforge.app/functions";
+
+  const $ = (id) => document.getElementById(id);
+  let photoUploaded = false, vapi = null, calling = false, knownCaseIds = new Set(), pollTimer = null;
+
+  // ---- photo upload ----
+  $("drop").addEventListener("click", () => $("file").click());
+  $("file").addEventListener("change", async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const order = $("order").value.trim();
+    if (!order) { $("upState").textContent = "Enter your order number first."; return; }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      $("preview").src = reader.result; $("preview").hidden = false; $("dropText").hidden = true;
+      $("upState").textContent = "Uploading…";
+      try {
+        const res = await fetch(`${FN}/upload-photo`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order_id: order, imageBase64: reader.result }),
+        });
+        const j = await res.json();
+        if (j.photo_url) { photoUploaded = true; $("drop").classList.add("has"); $("upState").className = "state ok"; $("upState").textContent = "✓ Photo received"; }
+        else $("upState").textContent = "Upload failed: " + (j.error || "unknown");
+      } catch (err) { $("upState").textContent = "Upload error: " + err.message; }
+    };
+    reader.readAsDataURL(f);
+  });
+
+  // ---- call ----
+  function setStatus(t) { $("statusText").textContent = t; }
+  function addMsg(role, text) {
+    const d = document.createElement("div");
+    d.className = "msg " + (role === "assistant" ? "assistant" : "user");
+    d.innerHTML = `<div class="who">${role === "assistant" ? "Concierge" : "You"}</div>${text}`;
+    $("transcript").appendChild(d); $("transcript").scrollTop = $("transcript").scrollHeight;
+  }
+
+  const OUTCOMES = {
+    auto_approve: { cls: "approve", title: "Refund approved ✅", body: "Your refund has been approved and will appear on your original payment method within 3–5 business days." },
+    escalate: { cls: "escalate", title: "Under review 🕓", body: "Your return needs a closer look. A specialist will review it and get back to you within 24 hours." },
+    deny: { cls: "deny", title: "We couldn't approve this ❌", body: "We're unable to approve this refund. If you believe this is a mistake, reply to your confirmation email to appeal." },
+  };
+  function showOutcome(c) {
+    const o = OUTCOMES[c.verdict] || OUTCOMES.escalate;
+    $("outcome").className = "outcome on " + o.cls;
+    $("ticket").textContent = `TICKET #${c.order_id} · created ${new Date(c.created_at).toLocaleTimeString()}`;
+    $("outTitle").textContent = o.title;
+    $("outBody").textContent = o.body;
+    $("outReasons").innerHTML = (c.reasons || []).map((r) => `<li>${r}</li>`).join("");
+  }
+
+  async function pollOutcome(order) {
+    try {
+      const res = await fetch(`${FN}/cases-feed`, { cache: "no-store" });
+      const { data } = await res.json();
+      const fresh = (data || []).filter((c) => c.order_id === order && !knownCaseIds.has(c.id));
+      if (fresh.length) { clearInterval(pollTimer); showOutcome(fresh[0]); }
+    } catch {}
+  }
+
+  $("callBtn").addEventListener("click", async () => {
+    if (calling) { vapi?.stop(); return; }
+    const order = $("order").value.trim();
+    if (!order) { $("note").textContent = "Please enter your order number."; return; }
+    if (PUBLIC_KEY.startsWith("REPLACE")) { $("note").textContent = "⚠ Vapi public key not set yet — voice call disabled."; return; }
+    if (!photoUploaded) $("note").textContent = "Tip: upload a photo so the concierge can verify your item.";
+
+    // snapshot existing cases for this order so we only react to the new ticket
+    try { const { data } = await (await fetch(`${FN}/cases-feed`)).json(); (data||[]).filter(c=>c.order_id===order).forEach(c=>knownCaseIds.add(c.id)); } catch {}
+
+    vapi = new Vapi(PUBLIC_KEY);
+    vapi.on("call-start", () => { setStatus("Connected — speak to the concierge"); });
+    vapi.on("call-end", () => { setStatus("Call ended — finalizing your ticket…"); calling = false; $("callBtn").textContent = "📞 Talk to our returns concierge"; $("callBtn").classList.remove("end"); pollTimer = setInterval(() => pollOutcome(order), 2000); pollOutcome(order); });
+    vapi.on("message", (m) => { if (m.type === "transcript" && m.transcriptType === "final") addMsg(m.role, m.transcript); });
+    vapi.on("error", (e) => { setStatus("Error: " + (e?.message || "call failed")); calling = false; });
+
+    $("callbox").classList.add("on"); $("transcript").innerHTML = ""; $("outcome").className = "outcome";
+    setStatus("Connecting…");
+    calling = true; $("callBtn").textContent = "■ End call"; $("callBtn").classList.add("end");
+    vapi.start(ASSISTANT_ID, { variableValues: { order_id: order, reason: $("reason").value.trim() } });
+  });
+</script>
+</body>
+</html>

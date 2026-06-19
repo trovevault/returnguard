@@ -1,0 +1,11 @@
+{
+    "actorSpecification": 1,
+    "name": "returnguard-reverse-image-check",
+    "title": "ReturnGuard Reverse Image Check",
+    "description": "Reverse image search via SerpApi Google Lens; flags matches on resale marketplaces for return-fraud detection.",
+    "version": "0.1",
+    "buildTag": "latest",
+    "input": "./input_schema.json",
+    "readme": "../README.md",
+    "dockerfile": "../Dockerfile"
+}
